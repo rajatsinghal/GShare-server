@@ -1,5 +1,5 @@
 <?php
-class db{
+class Db{
     private $config = array(
         "server" => "localhost",
         "username" => "root",
@@ -18,10 +18,6 @@ class db{
     
     public function __construct() {
         $this->connect();        
-    }
-    
-    public static function lib() {
-        return new db;
     }
     
     public function execute($query) {
