@@ -1,25 +1,45 @@
 <?php
 require_once 'user.php';
 class Signup extends User {
-    public $request_data = array(
-        'email' => '',
-        'password' => ''
-    );
+    public $result;
     
     public function __construct() {
-        $this->request_data['email'] = $_POST['email'];
-        $this->request_data['password'] = $_POST['password'];
+        $this->attributes = $_POST;
         if($this->verify()) {
-            if($this->process())
-                echo "done!!!";
+            if($this->process()) {
+                $this->sendConfirmationMail();
+                $this->result = true;
+            }
             else
-                echo "error!!!";
+                $this->result = false;
         }
+    }
+    
+    public function sendConfirmationMail() {
+        Mailer::lib()->confirmationMail($this);
+    }
+    
+    public function getResult() {
+        if($this->result)
+            return "done!!!";
+        else
+            return "error!!!";
+    }
+    
+    public function rules() {
+        return array(
+            "email" => array("unique","email"),
+            "password" => array("password")
+        );
     }
     
     public function verify() {
         $verifier = new Verification();
-        if($verifier->ruleEmail($this->request_data['email']) && $verifier->rulePassword($this->request_data['password']))
+        $rules = $this->rules();
+        //foreach($rules as $rule) {
+            
+        //}
+        if($verifier->ruleEmail($this->attributes['email']) && $verifier->rulePassword($this->attributes['password']))
             return true;
         else
             return false;
@@ -29,8 +49,8 @@ class Signup extends User {
         $db = new Db;
         $perishable_token = $this->generateToken();
         $query = "insert into user (email, password, perishable_token, last_activity_timestamp, signup_timestamp) values (".
-                "'" . $this->request_data['email'] . "', " .
-                "'" . $this->request_data['password'] . "', " .
+                "'" . $this->attributes['email'] . "', " .
+                "'" . $this->attributes['password'] . "', " .
                 "'" . $perishable_token . "', " . time() . ", " . time() . ")";
         return $db->execute($query);
     }
@@ -41,4 +61,5 @@ class Signup extends User {
 }
 
 $sign_up = new Signup();
+echo $sign_up->getResult();
 ?>
